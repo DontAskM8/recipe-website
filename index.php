@@ -9,7 +9,7 @@
     <body>
         <?php include "./components/navbar.php" ?>
         <?php include "./db/connect_db.php" ?>
-        <main class="container mt-4">
+        <div class="container mt-4">
             <h2 class="text-center">Latest Recipes</h2>
             <div class="row">
                 <?php
@@ -18,7 +18,7 @@
 
                 ?>
             </div>
-        </main>
+        </div>
         
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
         <?php include "./components/footer.php"; ?>
