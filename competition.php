@@ -1,58 +1,143 @@
-<?php include "./components/session.php"; ?>
+<?php 
+    include "./components/session.php";
+    include "./db/connect_db.php";
+ ?>
 
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <?php include "./components/styling.php" ?>
-    <title>Cooking Competition</title>
-</head>
-<body>
-    <?php include "./components/navbar.php" ?>
-    
-    <div class="container mt-5">
-        <h2 class="text-center">Cooking Competition</h2>
-        <form action="competition_submit.php" method="post" enctype="multipart/form-data">
-            <div class="mb-3">
-                <label for="recipe_title" class="form-label">Recipe Title</label>
-                <input type="text" class="form-control" id="recipe_title" name="recipe_title" required>
-            </div>
-            <div class="mb-3">
-                <label for="recipe_description" class="form-label">Description</label>
-                <textarea class="form-control" id="recipe_description" name="recipe_description" rows="3" required></textarea>
-            </div>
-            <div class="mb-3">
-                <label for="recipe_image" class="form-label">Upload Image</label>
-                <input type="file" class="form-control" id="recipe_image" name="recipe_image" accept="image/*" required>
-            </div>
-            <button type="submit" class="btn btn-primary">Submit Recipe</button>
-        </form>
-    </div>
-    
-    <div class="container mt-5">
-        <h2 class="text-center">Competition Entries</h2>
-        <div class="row">
-            <?php
-            $conn = new mysqli("localhost", "root", "", "recipes_db");
-            if ($conn->connect_error) die("Connection failed: " . $conn->connect_error);
+    <head>
+        <?php include "./components/styling.php" ?>
+        <title>Cooking Competitions</title>
+    </head>
+    <body>
+        <?php include 'components/navbar.php'; ?>
+        
+        <div class="container mt-5">
+            <h2 class="text-center mb-5">Cooking Competitions</h2>
             
-            $sql = "SELECT id, recipe_title, recipe_description, recipe_image FROM competition_entries ORDER BY id DESC";
-            $result = $conn->query($sql);
             
-            while ($row = $result->fetch_assoc()) {
-                echo "<div class='col-md-4'>";
-                echo "<div class='card mb-3'>";
-                echo "<img src='uploads/" . $row["recipe_image"] . "' class='card-img-top' alt='Recipe Image'>";
-                echo "<div class='card-body'>";
-                echo "<h5 class='card-title'>" . $row["recipe_title"] . "</h5>";
-                echo "<p class='card-text'>" . $row["recipe_description"] . "</p>";
-                echo "<a href='vote.php?id=" . $row["id"] . "' class='btn btn-success'>Vote</a>";
-                echo "</div></div></div>";
-            }
-            $conn->close();
-            ?>
+            <!-- only admins can create competitions -->
+            <?php if(isset($_SESSION["role"]) && $_SESSION["role"] == "admin"): ?>
+                <div class="d-flex justify-content-end mb-3">
+                    <button class="btn btn-primary">Create Competition</button>
+                </div>
+            <?php endif; ?>
+
+            <!-- If not logged in, let the user know how to join the competition -->
+            <?php if(!isset($_SESSION["username"])): ?>
+                <div class="alert alert-info">You must login to enter the competition!</div>
+            <?php endif; ?>
+
+            <div class="d-flex justify-content-center flex-wrap gap-3 w-100">
+                <?php
+                 // Fetch active competitions
+                $stmt = $conn->prepare("SELECT id, name, description, start_time, end_time, isActive FROM competitions ORDER BY end_time DESC");
+                $stmt->execute();
+                $result = $stmt->get_result();
+
+                if ($result->num_rows > 0) {
+                    while ($row = $result->fetch_assoc()) {
+                        ?>
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100 shadow">
+                                <div class="card-body">
+                                    <h5 class="card-title"><?php echo htmlspecialchars($row['name']); ?></h5>
+                                    <p class="card-text text-muted"><?php echo htmlspecialchars($row['description']); ?></p>
+                                    <p class="card-text">
+                                        <strong>Start:</strong> <?php echo $row['start_time']; ?><br>
+                                        <strong>End:</strong> <?php echo $row['end_time']; ?>
+                                    </p>
+                                    <div class="d-flex align-items-center">
+                                        <!-- Dont show join competition button if not logged in -->
+                                        <?php if(isset($_SESSION["username"])): ?>
+                                            <a href="competition_details.php?id=<?php echo htmlspecialchars($row['id']); ?>" class="btn btn-primary me-2 <?php if(!$row['isActive']) echo "disabled opacity-50" ?>" >Join Competition</a>
+                                        <?php endif ?>
+                                        
+                                        <!-- Competition buttons can only be seen by admin -->
+                                        <?php if(isset($_SESSION["role"]) && $_SESSION["role"] == "admin"): ?>
+                                            <a href="competition_details.php?id=<?php echo htmlspecialchars($row['id']); ?>" class="btn btn-<?php echo $row['isActive'] ? "warning" : "success" ?>" ><?php echo $row['isActive'] ? "Disable" : "Enable" ?></a>
+                                            <a href="competition_details.php?id=<?php echo htmlspecialchars($row['id']); ?>" class="btn btn-danger ms-auto">Delete</a>
+                                        <?php endif ?>
+                                    </div>
+                                    
+                                </div>
+                            </div>
+                        </div>
+                        <?php
+                    }
+                }else {
+                    echo "<p class='text-muted'>No active competitions.</p>";
+                }
+                $stmt->close();
+                ?>
+            </div>
         </div>
-    </div>
-    
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
+
+        
+        <!-- Create Competition Modal, only generate if its admin -->
+        <?php if(isset($_SESSION["role"]) && $_SESSION["role"] == "admin"): ?>
+            <div class="modal fade" id="createCompetitionModal" tabindex="-1" aria-labelledby="createCompetitionModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="createCompetitionModalLabel">Create a New Competition</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <form method="post" id="addCompetitionForm">
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <label for="name" class="form-label">Name</label>
+                                    <input type="text" class="form-control" id="name" name="name" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="description" class="form-label">Description</label>
+                                    <textarea type="text" class="form-control" id="description" name="description" required></textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="start_time" class="form-label">Start Date</label>
+                                    <input type="datetime-local" class="form-control" id="start_time" name="start_time" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="end_time" class="form-label">End Date</label>
+                                    <input type="datetime-local" class="form-control" id="end_time" name="end_time" required>
+                                </div>
+                                <div id="addCompetitionMessage">
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="submit" class="btn btn-success">Create Competition</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <script>
+                document.getElementById("addCompetitionForm").addEventListener("submit", function(event) {
+                    event.preventDefault(); // Prevent default form submission
+
+                    let formData = new FormData(this);
+
+                    fetch("db/handleAddCompetition.php", {
+                        method: "POST",
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        let messageDiv = document.getElementById("addCompetitionMessage");
+                        if (data.status === "success") {
+                            messageDiv.innerHTML = `<div class="alert alert-success">Competition created!</div>`;
+                            setTimeout(() => location.reload(), 500)//Refresh the page after success.
+                        } else {
+                            messageDiv.innerHTML = `<div class="alert alert-danger">${data.message}</div>`;
+                        }
+                    })
+                    .catch(error => console.error("Error:", error));
+                });
+                </script>
+        <?php endif; ?>
+        
+
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    </body>
 </html>
