@@ -42,7 +42,7 @@
                 <div class="card">
                     <h4 class="text-center">Register</h4>
                     <?php if(isset($message)) echo $message; ?>
-                    <form action="db/handleRegister.php" method="POST">
+                    <form action="#" method="POST">
                         <div class="mb-3">
                             <label for="username" class="form-label">Username</label>
                             <input type="text" class="form-control" id="username" name="username" required>
