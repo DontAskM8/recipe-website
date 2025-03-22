@@ -60,6 +60,7 @@ if (isset($_GET["status"])) {
                 </div>
             </div>
         </div>
+        <?php include "./components/footer.php"; ?>
     </body>
 </html>
 
