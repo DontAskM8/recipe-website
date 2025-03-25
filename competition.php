@@ -1,6 +1,8 @@
 <?php 
     include "./components/session.php";
     include "./db/connect_db.php";
+
+    date_default_timezone_set('Asia/Kuala_Lumpur'); //Set to malaysia time zone
  ?>
 
 <!DOCTYPE html>
@@ -19,7 +21,7 @@
             <!-- only admins can create competitions -->
             <?php if(isset($_SESSION["role"]) && $_SESSION["role"] == "admin"): ?>
                 <div class="d-flex justify-content-end mb-3">
-                    <button class="btn btn-primary">Create Competition</button>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createCompetitionModal">Create Competition</button>
                 </div>
 
                 <script>
@@ -76,13 +78,31 @@
                                     <h5 class="card-title"><?php echo htmlspecialchars($row['name']); ?></h5>
                                     <p class="card-text text-muted"><?php echo htmlspecialchars($row['description']); ?></p>
                                     <p class="card-text">
-                                        <strong>Start:</strong> <?php echo $row['start_time']; ?><br>
-                                        <strong>End:</strong> <?php echo $row['end_time']; ?>
+                                        <strong>Start:</strong> <?php echo (new DateTime($row['start_time']))->format('d/m/Y H:i'); ?><br>
+                                        <strong>End:</strong> <?php echo (new DateTime($row['end_time']))->format('d/m/Y H:i'); ?>
                                     </p>
                                     <div class="d-flex align-items-center">
                                         <!-- Dont show join competition button if not logged in -->
-                                        <?php if(isset($_SESSION["username"])): ?>
-                                            <a href="competition_details.php?id=<?php echo htmlspecialchars($row['id']); ?>" class="btn btn-primary me-2 <?php if(!$row['isActive']) echo "disabled opacity-50" ?>" >Join Competition</a>
+                                        <?php 
+                                            if(isset($_SESSION["username"])):
+                                                $startTime = new DateTime($row["start_time"]);
+                                                $endTime = new DateTime($row["end_time"]);
+                                                $currentTime = new DateTime();
+
+                                                $isCompetitionError = ($currentTime < $startTime) || ($currentTime > $endTime);
+                                         ?>
+                                            <a href="competition_details.php?id=<?php echo htmlspecialchars($row['id']); ?>" class="btn btn-primary me-2 <?php if(!$row['isActive'] || $isCompetitionError) echo "disabled opacity-50" ?>" >
+                                                <?php 
+                                                    if($currentTime < $startTime){
+                                                        echo "Not started";
+                                                    }
+                                                    else if($currentTime > $endTime){
+                                                        echo "Ended";
+                                                    }else{
+                                                        echo "Join";
+                                                    }
+                                                ?>
+                                            </a>
                                         <?php endif ?>
                                         
                                         <!-- Competition buttons can only be seen by admin -->
