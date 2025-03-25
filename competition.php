@@ -21,6 +21,25 @@
                 <div class="d-flex justify-content-end mb-3">
                     <button class="btn btn-primary">Create Competition</button>
                 </div>
+
+                <script>
+                    function toggleCompetition(button, id) {
+                        fetch("./db/toggleCompetition.php?id=" + id, {
+                            method: "POST"
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                button.textContent = data.isActive ? "Disable" : "Enable";
+                                button.classList.toggle("btn-warning");
+                                button.classList.toggle("btn-success");
+                            } else {
+                                alert("Failed to update status!");
+                            }
+                        })
+                        .catch(error => console.error("Error:", error));
+                    }
+                </script>
             <?php endif; ?>
 
             <!-- If not logged in, let the user know how to join the competition -->
@@ -55,11 +74,10 @@
                                         
                                         <!-- Competition buttons can only be seen by admin -->
                                         <?php if(isset($_SESSION["role"]) && $_SESSION["role"] == "admin"): ?>
-                                            <a href="competition_details.php?id=<?php echo htmlspecialchars($row['id']); ?>" class="btn btn-<?php echo $row['isActive'] ? "warning" : "success" ?>" ><?php echo $row['isActive'] ? "Disable" : "Enable" ?></a>
-                                            <a href="competition_details.php?id=<?php echo htmlspecialchars($row['id']); ?>" class="btn btn-danger ms-auto">Delete</a>
+                                            <button onClick="toggleCompetition(this, '<?php echo $row["id"] ?>')" href="competition_details.php?id=<?php echo htmlspecialchars($row['id']); ?>" class="btn btn-<?php echo $row['isActive'] ? "warning" : "success" ?>" ><?php echo $row['isActive'] ? "Disable" : "Enable" ?></button>
+                                            <button href="competition_details.php?id=<?php echo htmlspecialchars($row['id']); ?>" class="btn btn-danger ms-auto">Delete</button>
                                         <?php endif ?>
                                     </div>
-                                    
                                 </div>
                             </div>
                         </div>
