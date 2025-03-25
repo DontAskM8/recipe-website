@@ -14,6 +14,11 @@
         $starttime = $_POST["start_time"];
         $endtime = $_POST["end_time"];
 
+        if(new DateTime($starttime) > new DateTime($endtime)){
+            echo json_encode(["status" => "error", "message" => "Start time cannot be later than end time!"]);
+            exit();
+        }
+
         $stmt = $conn->prepare("INSERT INTO competitions (name, description, start_time, end_time) VALUES (?, ?, ?, ?)");
         $stmt->bind_param("ssss", $name, $description, $starttime, $endtime);
 

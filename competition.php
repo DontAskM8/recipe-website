@@ -1,6 +1,8 @@
 <?php 
     include "./components/session.php";
     include "./db/connect_db.php";
+
+    date_default_timezone_set('Asia/Kuala_Lumpur'); //Set to malaysia time zone
  ?>
 
 <!DOCTYPE html>
@@ -19,8 +21,40 @@
             <!-- only admins can create competitions -->
             <?php if(isset($_SESSION["role"]) && $_SESSION["role"] == "admin"): ?>
                 <div class="d-flex justify-content-end mb-3">
-                    <button class="btn btn-primary">Create Competition</button>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createCompetitionModal">Create Competition</button>
                 </div>
+
+                <script>
+                    function toggleCompetition(button, id) {
+                        fetch("./db/toggleCompetition.php?id=" + id, {
+                            method: "POST"
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                button.textContent = data.isActive ? "Disable" : "Enable";
+                                button.classList.toggle("btn-warning");
+                                button.classList.toggle("btn-success");
+                            } else {
+                                alert("Failed to update status!");
+                            }
+                        })
+                        .catch(error => console.error("Error:", error));
+                    }
+
+                    function deleteCompetition(id){
+                        if(!confirm("Are you sure u want to delete competition id " + id)) return; //Stop the execution of the function if cancel
+                        
+                        fetch("./db/deleteCompetition.php?id=" + id, {
+                            method: "DELETE"
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            document.querySelector(`[data-competition-id="${id}"]`).remove();
+                        })
+                        .catch(error => console.error("Error:", error));
+                    }
+                </script>
             <?php endif; ?>
 
             <!-- If not logged in, let the user know how to join the competition -->
@@ -38,35 +72,52 @@
                 if ($result->num_rows > 0) {
                     while ($row = $result->fetch_assoc()) {
                         ?>
-                        <div class="col-md-4 mb-3">
+                        <div class="col-md-4 mb-3" data-competition-id="<?php echo $row["id"] ?>">
                             <div class="card h-100 shadow">
                                 <div class="card-body">
                                     <h5 class="card-title"><?php echo htmlspecialchars($row['name']); ?></h5>
                                     <p class="card-text text-muted"><?php echo htmlspecialchars($row['description']); ?></p>
                                     <p class="card-text">
-                                        <strong>Start:</strong> <?php echo $row['start_time']; ?><br>
-                                        <strong>End:</strong> <?php echo $row['end_time']; ?>
+                                        <strong>Start:</strong> <?php echo (new DateTime($row['start_time']))->format('d/m/Y H:i'); ?><br>
+                                        <strong>End:</strong> <?php echo (new DateTime($row['end_time']))->format('d/m/Y H:i'); ?>
                                     </p>
                                     <div class="d-flex align-items-center">
                                         <!-- Dont show join competition button if not logged in -->
-                                        <?php if(isset($_SESSION["username"])): ?>
-                                            <a href="competition_details.php?id=<?php echo htmlspecialchars($row['id']); ?>" class="btn btn-primary me-2 <?php if(!$row['isActive']) echo "disabled opacity-50" ?>" >Join Competition</a>
+                                        <?php 
+                                            if(isset($_SESSION["username"])):
+                                                $startTime = new DateTime($row["start_time"]);
+                                                $endTime = new DateTime($row["end_time"]);
+                                                $currentTime = new DateTime();
+
+                                                $isCompetitionError = ($currentTime < $startTime) || ($currentTime > $endTime);
+                                         ?>
+                                            <a href="competition_details.php?id=<?php echo htmlspecialchars($row['id']); ?>" class="btn btn-primary me-2 <?php if(!$row['isActive'] || $isCompetitionError) echo "disabled opacity-50" ?>" >
+                                                <?php 
+                                                    if($currentTime < $startTime){
+                                                        echo "Not started";
+                                                    }
+                                                    else if($currentTime > $endTime){
+                                                        echo "Ended";
+                                                    }else{
+                                                        echo "Join";
+                                                    }
+                                                ?>
+                                            </a>
                                         <?php endif ?>
                                         
                                         <!-- Competition buttons can only be seen by admin -->
                                         <?php if(isset($_SESSION["role"]) && $_SESSION["role"] == "admin"): ?>
-                                            <a href="competition_details.php?id=<?php echo htmlspecialchars($row['id']); ?>" class="btn btn-<?php echo $row['isActive'] ? "warning" : "success" ?>" ><?php echo $row['isActive'] ? "Disable" : "Enable" ?></a>
-                                            <a href="competition_details.php?id=<?php echo htmlspecialchars($row['id']); ?>" class="btn btn-danger ms-auto">Delete</a>
+                                            <button onClick="toggleCompetition(this, '<?php echo $row["id"] ?>')" class="btn btn-<?php echo $row['isActive'] ? "warning" : "success" ?>" ><?php echo $row['isActive'] ? "Disable" : "Enable" ?></button>
+                                            <button onClick="deleteCompetition('<?php echo $row["id"] ?>')" class="btn btn-danger ms-auto">Delete</button>
                                         <?php endif ?>
                                     </div>
-                                    
                                 </div>
                             </div>
                         </div>
                         <?php
                     }
                 }else {
-                    echo "<p class='text-muted'>No active competitions.</p>";
+                    echo "<p class='text-muted'>There are currently no competitions, check back later!</p>";
                 }
                 $stmt->close();
                 ?>
