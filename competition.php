@@ -117,7 +117,7 @@
                         <?php
                     }
                 }else {
-                    echo "<p class='text-muted'>No active competitions.</p>";
+                    echo "<p class='text-muted'>There are currently no competitions, check back later!</p>";
                 }
                 $stmt->close();
                 ?>
