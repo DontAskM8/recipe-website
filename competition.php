@@ -39,6 +39,19 @@
                         })
                         .catch(error => console.error("Error:", error));
                     }
+
+                    function deleteCompetition(id){
+                        if(!confirm("Are you sure u want to delete competition id " + id)) return; //Stop the execution of the function if cancel
+                        
+                        fetch("./db/deleteCompetition.php?id=" + id, {
+                            method: "DELETE"
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            document.querySelector(`[data-competition-id="${id}"]`).remove();
+                        })
+                        .catch(error => console.error("Error:", error));
+                    }
                 </script>
             <?php endif; ?>
 
@@ -57,7 +70,7 @@
                 if ($result->num_rows > 0) {
                     while ($row = $result->fetch_assoc()) {
                         ?>
-                        <div class="col-md-4 mb-3">
+                        <div class="col-md-4 mb-3" data-competition-id="<?php echo $row["id"] ?>">
                             <div class="card h-100 shadow">
                                 <div class="card-body">
                                     <h5 class="card-title"><?php echo htmlspecialchars($row['name']); ?></h5>
@@ -74,8 +87,8 @@
                                         
                                         <!-- Competition buttons can only be seen by admin -->
                                         <?php if(isset($_SESSION["role"]) && $_SESSION["role"] == "admin"): ?>
-                                            <button onClick="toggleCompetition(this, '<?php echo $row["id"] ?>')" href="competition_details.php?id=<?php echo htmlspecialchars($row['id']); ?>" class="btn btn-<?php echo $row['isActive'] ? "warning" : "success" ?>" ><?php echo $row['isActive'] ? "Disable" : "Enable" ?></button>
-                                            <button href="competition_details.php?id=<?php echo htmlspecialchars($row['id']); ?>" class="btn btn-danger ms-auto">Delete</button>
+                                            <button onClick="toggleCompetition(this, '<?php echo $row["id"] ?>')" class="btn btn-<?php echo $row['isActive'] ? "warning" : "success" ?>" ><?php echo $row['isActive'] ? "Disable" : "Enable" ?></button>
+                                            <button onClick="deleteCompetition('<?php echo $row["id"] ?>')" class="btn btn-danger ms-auto">Delete</button>
                                         <?php endif ?>
                                     </div>
                                 </div>
