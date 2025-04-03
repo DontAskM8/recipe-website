@@ -44,8 +44,9 @@
             $description = $conn->real_escape_string($_POST['description']);
             $ingredients = $conn->real_escape_string($_POST['ingredients']);
             $steps = $conn->real_escape_string($_POST['steps']);
+            $username = $conn->real_escape_string($_SESSION["username"]);
             
-            $sql = "INSERT INTO recipes (title, cuisine, description, ingredients, steps) VALUES ('$title', '$cuisine', '$description', '$ingredients', '$steps')";
+            $sql = "INSERT INTO recipes (title, cuisine, description, ingredients, steps, username) VALUES ('$title', '$cuisine', '$description', '$ingredients', '$steps', '$username')";
             
             if ($conn->query($sql) === TRUE) {
                 echo "<script>alert('Recipe added successfully!'); window.location.href='add_recipe.php';</script>";
