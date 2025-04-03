@@ -16,6 +16,10 @@
                 <input type="text" class="form-control" id="title" name="title" required>
             </div>
             <div class="mb-3">
+                <label for="cuisine" class="form-label">Cuisine Type</label>
+                <input type="text" class="form-control" id="cuisine" name="cuisine" required>
+            </div>
+            <div class="mb-3">
                 <label for="description" class="form-label">Description</label>
                 <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
             </div>
@@ -36,14 +40,16 @@
             if ($conn->connect_error) die("Connection failed: " . $conn->connect_error);
             
             $title = $conn->real_escape_string($_POST['title']);
+            $cuisine = $conn->real_escape_string($_POST['cuisine']);
             $description = $conn->real_escape_string($_POST['description']);
             $ingredients = $conn->real_escape_string($_POST['ingredients']);
             $steps = $conn->real_escape_string($_POST['steps']);
+            $username = $conn->real_escape_string($_SESSION["username"]);
             
-            $sql = "INSERT INTO recipes (title, description, ingredients, steps) VALUES ('$title', '$description', '$ingredients', '$steps')";
+            $sql = "INSERT INTO recipes (title, cuisine, description, ingredients, steps, username) VALUES ('$title', '$cuisine', '$description', '$ingredients', '$steps', '$username')";
             
             if ($conn->query($sql) === TRUE) {
-                echo "<div class='alert alert-success mt-3'>Recipe added successfully!</div>";
+                echo "<script>alert('Recipe added successfully!'); window.location.href='add_recipe.php';</script>";
             } else {
                 echo "<div class='alert alert-danger mt-3'>Error: " . $conn->error . "</div>";
             }

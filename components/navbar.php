@@ -8,9 +8,11 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav">
                     <li class="nav-item"><a class="nav-link" href="index.php">Home</a></li>
-                    <li class="nav-item"><a class="nav-link" href="add_recipe.php">Add Recipe</a></li>
+                    <?php if(isset($_SESSION["username"])): ?> 
+                        <li class="nav-item"><a class="nav-link" href="add_recipe.php">Add Recipe</a></li>
+                    <?php endif ?>
                     <li class="nav-item"><a class="nav-link" href="meal_planning.php">Meal Planning</a></li>
-                    <li class="nav-item"><a class="nav-link" href="community.php">Community</a></li>
+                    <li class="nav-item"><a class="nav-link" href="community_engagement.php">Community</a></li>
                     <li class="nav-item"><a class="nav-link" href="competition.php">Cooking Competition</a></li>
                     <li class="nav-item rounded-1"><a class="nav-link" 
                         style="<?php echo isset($_SESSION["username"]) ? "color: red" : "color: skyblue"; ?>"
