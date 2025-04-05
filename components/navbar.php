@@ -10,28 +10,19 @@
                     <li class="nav-item"><a class="nav-link" href="index.php">Home</a></li>
                     <?php if(isset($_SESSION["username"])): ?> 
                         <li class="nav-item"><a class="nav-link" href="add_recipe.php">Add Recipe</a></li>
+                        <li class="nav-item"><a class="nav-link" href="meal_planning.php">Meal Planning</a></li>
                     <?php endif ?>
-                    <li class="nav-item"><a class="nav-link" href="meal_planning.php">Meal Planning</a></li>
                     <li class="nav-item"><a class="nav-link" href="community_engagement.php">Community</a></li>
                     <li class="nav-item"><a class="nav-link" href="competition.php">Cooking Competition</a></li>
-                    <li class="nav-item rounded-1"><a class="nav-link" 
-                        style="<?php echo isset($_SESSION["username"]) ? "color: red" : "color: skyblue"; ?>"
-                        href="<?php
-                            if(isset($_SESSION["username"])){
-                                echo "logout.php";
-                            }else{
-                                echo "login.php";
-                            }
-                        ?>">
-                        <?php 
-                            if(!isset($_SESSION["username"])){
-                                echo "Login";
-                            }else{
-                                // echo $_SESSION["username"];
-                                echo "Logout";
-                            }
-                        ?>
-                    </a></li>
+                    <?php if(isset($_SESSION["role"]) && $_SESSION["role"] == "admin"): ?>
+                        <li class="nav-item"><a class="nav-link" href="admin_meal_plans.php">Admin Dashboard</a></li>
+                    <?php endif ?>
+                    <li class="nav-item">
+                        <a class="nav-link" style="<?php echo isset($_SESSION["username"]) ? "color: red" : "color: skyblue"; ?>"
+                            href="<?php echo isset($_SESSION["username"]) ? "logout.php" : "login.php"; ?>">
+                            <?php echo isset($_SESSION["username"]) ? "Logout" : "Login"; ?>
+                        </a>
+                    </li>
                 </ul>
             </div>
         </div>
