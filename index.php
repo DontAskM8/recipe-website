@@ -12,9 +12,12 @@
 
     <div class="container mt-4">
         <?php
+        $username = $_SESSION["username"] ?? null;
+        $admin_username = "admin"; // Set your admin username
+
         if (isset($_GET['id']) && is_numeric($_GET['id'])) {
             $recipe_id = intval($_GET['id']);
-            $query = "SELECT title, cuisine, description, ingredients, steps FROM recipes WHERE id = ?";
+            $query = "SELECT title, cuisine, description, ingredients, steps, username FROM recipes WHERE id = ?";
             $stmt = $conn->prepare($query);
             $stmt->bind_param("i", $recipe_id);
             $stmt->execute();
@@ -38,6 +41,11 @@
                         <pre class="bg-light p-3"><?php echo nl2br(htmlspecialchars($recipe['steps'])); ?></pre>
 
                         <a href="index.php" class="btn btn-secondary mt-3">Back to Recipes</a>
+
+                        <?php if ($username === $admin_username || $username === $recipe['username']) { ?>
+                            <a href="delete_recipe.php?id=<?php echo $recipe_id; ?>" class="btn btn-danger mt-3"
+                               onclick="return confirm('Are you sure you want to delete this recipe?');">Delete Recipe</a>
+                        <?php } ?>
                     </div>
                 </div>
                 <?php
@@ -64,14 +72,14 @@
                 // Search functionality
                 if (isset($_GET['search']) && !empty($_GET['search'])) {
                     $search = "%" . $conn->real_escape_string($_GET['search']) . "%";
-                    $query = "SELECT id, title, cuisine, description FROM recipes WHERE title LIKE ? OR cuisine LIKE ? ORDER BY id DESC";
+                    $query = "SELECT id, title, cuisine, description, username FROM recipes WHERE title LIKE ? OR cuisine LIKE ? ORDER BY id DESC";
                     $stmt = $conn->prepare($query);
                     $stmt->bind_param("ss", $search, $search);
                     $stmt->execute();
                     $result = $stmt->get_result();
                 } else {
                     // Default: Show latest recipes
-                    $query = "SELECT id, title, cuisine, description FROM recipes ORDER BY id DESC LIMIT 6";
+                    $query = "SELECT id, title, cuisine, description, username FROM recipes ORDER BY id DESC LIMIT 6";
                     $result = $conn->query($query);
                 }
 
@@ -87,6 +95,11 @@
                                         <?php echo nl2br(htmlspecialchars(substr($row['description'], 0, 50))) . '...'; ?>
                                     </p>
                                     <a href="index.php?id=<?php echo $row['id']; ?>" class="btn btn-primary">View Recipe</a>
+
+                                    <?php if ($username === $admin_username || $username === $row['username']) { ?>
+                                        <a href="delete_recipe.php?id=<?php echo $row['id']; ?>" class="btn btn-danger"
+                                           onclick="return confirm('Are you sure you want to delete this recipe?');">Delete</a>
+                                    <?php } ?>
                                 </div>
                             </div>
                         </div>

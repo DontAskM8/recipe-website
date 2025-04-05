@@ -91,7 +91,7 @@
 
                                                 $isCompetitionError = ($currentTime < $startTime) || ($currentTime > $endTime);
                                          ?>
-                                            <a href="competition_details.php?id=<?php echo htmlspecialchars($row['id']); ?>" class="btn btn-primary me-2 <?php if(!$row['isActive'] || $isCompetitionError) echo "disabled opacity-50" ?>" >
+                                            <a data-bs-toggle="modal" data-bs-target="#joinCompetitionModal" class="btn btn-primary me-2 <?php if(!$row['isActive'] || $isCompetitionError) echo "disabled opacity-50" ?>" >
                                                 <?php 
                                                     if($currentTime < $startTime){
                                                         echo "Not started";
@@ -185,8 +185,75 @@
                     })
                     .catch(error => console.error("Error:", error));
                 });
-                </script>
+            </script>
         <?php endif; ?>
+
+        <div class="modal fade" id="joinCompetitionModal" tabindex="-1" aria-labelledby="joinCompetitionModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="joinCompetitionModalLabel">Join Competition</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form method="post" id="addCompetitionForm">
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label for="name" class="form-label">Name</label>
+                                <input type="text" class="form-control" id="name" name="name" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="description" class="form-label">Description</label>
+                                <select class="select" required>
+                                    <?php
+                                        $query = "SELECT id, title, cuisine, description FROM recipes WHERE username = ? ORDER BY id DESC";
+                                        $stmt = $conn->prepare($query);
+                                        $stmt->bind_param("s", $_SESSION["username"]);
+                                        $stmt->execute();
+                                        $result = $stmt->get_result();
+
+                                        if ($result && $result->num_rows > 0) {
+                                            while ($row = $result->fetch_assoc()) {
+                                                echo "<option value=".$row["id"].">".$row["title"]."</option>";
+                                            }
+                                        }
+                                    ?>
+
+                                </select>
+                            </div>
+                            <div id="joinCompetitionMessage">
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="submit" class="btn btn-success">Join Competition</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            document.getElementById("joinCompetitionForm").addEventListener("submit", function(event) {
+                event.preventDefault(); // Prevent default form submission
+
+                let formData = new FormData(this);
+
+                fetch("db/handleJoinCompetition.php", {
+                    method: "POST",
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    let messageDiv = document.getElementById("joinCompetitionMessage");
+                    if (data.status === "success") {
+                        messageDiv.innerHTML = `<div class="alert alert-success">Competition created!</div>`;
+                        setTimeout(() => location.reload(), 500)//Refresh the page after success.
+                    } else {
+                        messageDiv.innerHTML = `<div class="alert alert-danger">${data.message}</div>`;
+                    }
+                })
+                .catch(error => console.error("Error:", error));
+            });
+        </script>
         
 
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
