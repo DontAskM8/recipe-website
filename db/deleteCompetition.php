@@ -13,10 +13,16 @@
         $query = "DELETE FROM competitions WHERE id = ?";
         $stmt = $conn->prepare($query);
         $stmt->bind_param("i", $id);
-        $success = $stmt->execute();
-        $stmt->close();
-
-        echo json_encode(["success" => $success]);
-        exit();
+        
+        if ($stmt->execute()) {
+            echo json_encode(["success" => true]);
+        } else {
+            // Check if it's a foreign key constraint failure
+            if ($conn->errno == 1451) {
+                echo json_encode(["success" => false, "error" => "Cannot delete competition: Entries or votes exist"]);
+            } else {
+                echo json_encode(["success" => false, "error" => $conn->error]);
+            }
+        }
     }
 ?>
