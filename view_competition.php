@@ -172,7 +172,7 @@ $entriesResult = $stmtEntries->get_result();
                                 <button class="btn btn-secondary" disabled>Voted</button>
                             <?php else: ?>
                                 <form method="POST" action="db/handleVote.php">
-                                    <input type="hidden" name="recipe_id" value="<?php echo $row['recipe_id']; ?>">
+                                    <input type="hidden" name="recipe_id" value="<?php echo $entry['recipe_id']; ?>">
                                     <input type="hidden" name="competition_id" value="<?php echo $competitionId; ?>">
                                     <button type="submit" class="btn btn-success">Vote</button>
                                 </form>
